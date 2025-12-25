@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ASCII"?>
+<sdkproject:SdkProject xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sdkproject="http://www.xilinx.com/sdkproject" name="seek_cytometer" location="E:/seek_cytometer/software/seek_cytometer" platform="E:/seek_cytometer/software/cytometer_platform/export/cytometer_platform/cytometer_platform.xpfm" platformUID="xilinx:::0.0(custom)" systemProject="seek_cytometer_system" sysConfig="cytometer_platform" runtime="C/C++" cpu="standalone_domain" cpuInstance="psu_cortexa53_0" os="standalone" mssSignature="c109bebd25e2b23e52124461815673b7">
+  <configuration name="Debug" id="xilinx.gnu.arm.a53.exe.debug.1386497513">
+    <configBuildOptions xsi:type="sdkproject:SdkOptions"/>
+    <lastBuildOptions xsi:type="sdkproject:SdkOptions"/>
+  </configuration>
+  <configuration name="Release" id="xilinx.gnu.arm.a53.exe.release.1604043841" dirty="true">
+    <configBuildOptions xsi:type="sdkproject:SdkOptions"/>
+  </configuration>
+  <template appTemplateName="hello_world"/>
+</sdkproject:SdkProject>

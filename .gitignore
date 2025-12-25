@@ -1,0 +1,23 @@
+# ===== Vitis / Eclipse =====
+.metadata/
+RemoteSystemsTempFiles/
+.analytics
+IDE.log
+
+Debug/
+_ide/
+.settings/
+Release/
+
+.log/
+export/
+logs/
+tempdsa/
+
+
+
+# ===== OS / Editor =====
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
