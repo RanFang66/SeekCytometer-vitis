@@ -18,28 +18,9 @@
 #include "event_data.h"
 
 
-#define NETIF_EMAC_BASEADDR         XPAR_XEMACPS_0_BASEADDR
-#define FRAME_HEADER_HMI_TO_SOC     0xA5
-#define FRAME_HEADER_SOC_TO_HMI     0x5A
-
-#define CMD_HAND_SHAKE 				0x0001
-#define CMD_DETECTOR_SETTINGS 		0x0002
-#define CMD_DISABLE_DETECTOR        0x0003
-#define CMD_ACQUIRE_SETTINGS		0x0004
-#define CMD_ACQUIRE_START			0x0005
-#define CMD_ACQUIRE_STOP			0x0006
-#define CMD_DRIVE_SETTINGS 			0x0007
-#define CMD_SORTING_START			0x0008
-#define CMD_SORTING_STOP			0x0009
-
-#define CMD_GATE_SETTINGS			0x000A
-#define CMD_SPEED_MEASURE_SETTINGS  0x000B
-
-#define CMD_EVENT_DATA				0x0010
-#define CMD_WAVEFORM_DATA			0x0011
 
 
-#define UDP_FRAME_LENGTH  		1024
+
 
 /* Is connected with HMI */
 int is_connected = 0;
@@ -226,7 +207,7 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 	case CMD_ACQUIRE_START:
     {
         cytometer_start_analyze();
-        reset_event_data();
+//        reset_event_data();
         LOG_INFO("Start analyzing.");
         break;
     }
@@ -452,7 +433,7 @@ XStatus send_event_data(u32 data_bytes, const u8 *data_buffer)
 	u8 channel_num = analyze_enabled_channels_num();
 	u16 event_bytes = channel_num * 3 + 5;
 	u16 frame_len = (UDP_FRAME_LENGTH / event_bytes) * event_bytes;
-
+	u16 count = 0;
 	for (int i = 0; i < data_bytes; i += frame_len) {
 		if (i + frame_len > data_bytes) {
 			udp_len = data_bytes - i;
@@ -460,7 +441,11 @@ XStatus send_event_data(u32 data_bytes, const u8 *data_buffer)
 			udp_len = frame_len;
 		}
 		send_udp_frame(CMD_EVENT_DATA, udp_len, data_buffer + i);
+		count++;
 	}
+
+//	LOG_INFO("Send %d Frames(%d bytes) data, total: %d bytes", count, frame_len, data_bytes);
+
 
 	return XST_SUCCESS;
 }
@@ -474,11 +459,13 @@ void lwip_loop_func()
 
 
     if (send_event_data_flag == 1) {
-    	send_event_data_flag = 0;
-    	u32 data_bytes = process_events();
-    	if (data_bytes > 0) {
-    		send_event_data(data_bytes, get_event_data_buffer_udp());
-    	}
+    	u32 ch_num = analyze_enabled_channels_num();
+    	send_events_udp(ch_num);
+ //    	send_event_data_flag = 0;
+//    	u32 data_bytes = process_events();
+//    	if (data_bytes > 0) {
+//    		send_event_data(data_bytes, get_event_data_buffer_udp());
+//    	}
     }
 
     if (send_udp_frame_flag == 1) {

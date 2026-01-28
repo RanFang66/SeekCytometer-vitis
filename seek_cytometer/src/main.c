@@ -68,16 +68,16 @@ int main()
     while(1)
     {
     	lwip_loop_func();
-    	if (debug_flag == 1) {
-    		cytometer_start_analyze();
-			update_detector_settings(1, 1, 1, 1, 1, 3000);
-			update_enabled_channels(0x01);
-    	    debug_flag = 0;
-    	} else if (debug_flag == 2) {
-    		cytometer_stop_analyze();
-
-    		debug_flag = 0;
-    	}
+//    	if (debug_flag == 1) {
+//    		cytometer_start_analyze();
+//			update_detector_settings(1, 1, 1, 1, 1, 3000);
+//			update_enabled_channels(0x01);
+//    	    debug_flag = 0;
+//    	} else if (debug_flag == 2) {
+//    		cytometer_stop_analyze();
+//
+//    		debug_flag = 0;
+//    	}
     }
     cleanup_platform();
 

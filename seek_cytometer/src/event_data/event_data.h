@@ -9,8 +9,16 @@
 #define BRAM_BASE_ADDR    		XPAR_BRAM_0_BASEADDR
 #define BRAM_CTRL_BASE_ADDR		XPAR_BRAM_0_CTRL_BASEADDR
 
-#define BRAM_ADDR_MAX 			0x00004000
-#define MAGIC_WORD 				0xAA55AA55
+
+
+#define BRAM_SIZE_BYTES  0x00008000
+#define BRAM_LAST_ADDR   (BRAM_SIZE_BYTES - 4)
+#define BRAM_WORDS       (BRAM_SIZE_BYTES / 4)
+
+#define MAX_EVENT_WORDS_NUM		(64)
+#define MAGIC_HEAD				0x55AA55AA
+#define MAGIC_TAIL 				0xAA55AA55
+
 #define NUM_CHANNELS			8
 
 
@@ -27,6 +35,9 @@ u32 process_events();
 const u8 *get_event_data_buffer_udp();
 
 void reset_event_data();
+
+
+void send_events_udp(u32 channel_num);
 
 #endif
 

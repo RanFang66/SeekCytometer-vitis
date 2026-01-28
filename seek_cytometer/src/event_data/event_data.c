@@ -3,20 +3,38 @@
 #include "log.h"
 #include "lwip/def.h"
 #include "xil_cache.h"
+#include "stdbool.h"
+#include "udp_server.h"
 
 // BRAM WRITE START AT 1
+static u32 event_count = 0;
+static u32 event_cache[MAX_EVENT_WORDS_NUM];
+static u32 event_word_count = 0;
 
-static u32 last_wr_addr = 0;
+static u32 read_ptr = 0;
 static u32 last_wrap = 0;
-static u32 event_counter = 0;
+static u8 udp_buf[UDP_FRAME_LENGTH];
+static u32 udp_len = 0;
+static u32 word_cnt = 0;
+static u32 send_cnt = 0;
+static u32 event_words[MAX_EVENT_WORDS_NUM];
 
-
-static u32 event_data_buffer[(BRAM_ADDR_MAX - 1) / 4];
-u8 data_buffer_for_udp[BRAM_ADDR_MAX - 1];
-
-void reset_event_data()
+static inline u32 bram_read_word(u32 byte_addr)
 {
-	last_wr_addr = 0;
+    Xil_DCacheInvalidateRange(BRAM_BASE_ADDR + byte_addr, 4);
+    return Xil_In32(BRAM_BASE_ADDR + byte_addr);
+}
+
+static u32 ring_read_word(u32 *addr)
+{
+    u32 data = bram_read_word(*addr);
+
+    if (*addr >= BRAM_LAST_ADDR)
+        *addr = 0;
+    else
+        *addr += 4;
+
+    return data;
 }
 
 
@@ -32,151 +50,111 @@ u32 read_wrap_around_addr()
 	return ((bram_state & 0x01000000) >> 24);
 }
 
-u32 read_bram_block(u32 start_addr, u32 last_addr, u32 *buffer) {
-    // Disable cache to ensure get latest data
-    Xil_DCacheDisable();
-
-    u32 read_addr;
-//    for (u32 i = 0; i < word_count; i++) {
-////    	u32 index = (start_addr + i > BRAM_ADDR_MAX) ? (start_addr + i - BRAM_ADDR_MAX) : (start_addr + i);
-//
-////    	u32 index = start_addr+i;
-////    	if (index > BRAM_ADDR_MAX) {
-////    		index = index - BRAM_ADDR_MAX + 1;
-////    	}
-////    	u32 addr = BRAM_BASE_ADDR + index * 4;
-//        buffer[i] = Xil_In32(BRAM_BASE_ADDR + read_addr);
-//        if (read_addr == BRAM_ADDR_MAX * 4) {
-//        	read_addr = 4;
-//        } else {
-//        	read_addr += 4;
-//        }
-//    }
-    u32 count = 0;
-    if (last_addr > start_addr) {
-    	for (read_addr = start_addr; read_addr < last_addr; read_addr += 4) {
-    		buffer[count] = Xil_In32(BRAM_BASE_ADDR + read_addr);
-    		count++;
-    	}
-    } else {
-    	for (read_addr = start_addr; read_addr <= BRAM_ADDR_MAX; read_addr += 4) {
-    		buffer[count] = Xil_In32(BRAM_BASE_ADDR + read_addr);
-    		count++;
-    	}
-    	for (read_addr = 0; read_addr < last_addr; read_addr += 4) {
-    		buffer[count] = Xil_In32(BRAM_BASE_ADDR + read_addr);
-    		count++;
-    	}
-    }
-
-    // Re-enable the cache
-    Xil_DCacheEnable();
-    return count-1;
-}
 
 
-int parse_event_data(u32 *data_buffer, u32 word_count, EventData *event) {
-    // Check minimal data length
-    if (word_count < 2) {
-        LOG_ERROR("Insufficient data for event (min 2 words, got %d)", word_count);
-        return -1;
-    }
+typedef enum {
+    EVT_SYNC_HEAD,
+    EVT_COLLECT,
+} evt_state_t;
 
-    // Parse header
-    u32 header = data_buffer[0];
-    event->channel_mask = (header >> 24) & 0xFF;  // MSB is channel mask
-    event->event_id = header & 0x00FFFFFF;        // Low 3 bytes is event id
+static evt_state_t evt_state = EVT_SYNC_HEAD;
 
-    // Calculate the channels number
-    u32 enabled_channels = 0;
-    for (int i = 0; i < NUM_CHANNELS; i++) {
-        if (event->channel_mask & (1 << i)) {
-            enabled_channels++;
-        }
-    }
-
-    // Calculate expected words number
-    u32 expected_words = 1 + (enabled_channels * 3) + 1; // Header + 3 words per channel  + Magic word
-
-    // Check data length
-    if (word_count < expected_words) {
-        LOG_ERROR("Data truncated. Expected %d words, got %d", expected_words, word_count);
-        return -2;
-    }
-
-    // Check magic word
-    u32 magic_index = expected_words - 1;
-    if (data_buffer[magic_index] != MAGIC_WORD) {
-        LOG_ERROR("Error: Magic word mismatch. Expected 0x%08X, got 0x%08X",
-                   MAGIC_WORD, data_buffer[magic_index]);
-        return -3;
-    }
-
-    // Parse channel data
-    u32 data_index = 1; // Start after header
-    for (int ch = 0; ch < NUM_CHANNELS; ch++) {
-        if (event->channel_mask & (1 << ch)) {
-            // Peak value
-            event->peak[ch] = (int32_t)data_buffer[data_index++];
-
-            // Width Value
-            event->width[ch] = data_buffer[data_index++];
-
-            // Area Value
-            event->area[ch] = (int32_t)data_buffer[data_index++];
-        } else {
-            // Disabled channels
-            event->peak[ch] = 0;
-            event->width[ch] = 0;
-            event->area[ch] = 0;
-        }
-    }
-
-    return expected_words;
-}
-
-void convert_to_network_byte_order(const uint32_t* data_in, uint8_t* frame_out, size_t num_words) {
-    for (size_t i = 0; i < num_words; i++) {
-        uint32_t network_order = htonl(data_in[i]);
-        memcpy(&frame_out[i * 4], &network_order, sizeof(uint32_t));
-    }
-}
-
-
-u32 process_events() {
-	// 1. Read current state
-	u32 current_wr_addr = read_last_written_addr();
-
-
-	// 2. Check if there are new data write
-	if (current_wr_addr != last_wr_addr) {
-		u32 data_count = 0;
-//		u32 start_addr = 0;
-
-		// 3. Calculate data number
-//		data_count = (current_wr_addr > last_wr_addr) ? (current_wr_addr -last_wr_addr) : (BRAM_ADDR_MAX - last_wr_addr + current_wr_addr);
-//		if (last_wr_addr == 0) {
-//			start_addr = 1;
-//		} else {
-//			start_addr = last_wr_addr + 4;
-//		}
-		// 4 Read data
-		data_count = read_bram_block(last_wr_addr, current_wr_addr, event_data_buffer);
-
-		// 5 Convert to UDP data buffer
-		convert_to_network_byte_order(event_data_buffer, data_buffer_for_udp, data_count);
-
-		last_wr_addr = current_wr_addr;
-		return data_count * 4;
-	}else {
-		return 0;
-	}
-}
-
-
-const u8 *get_event_data_buffer_udp()
+bool fetch_one_event(u32 channel_num, u32 *out_words, u32 *out_word_count)
 {
-	return data_buffer_for_udp;
+//    u32 curr_wrap = read_wrap_around_addr();
+    u32 tail_addr = read_last_written_addr();
+
+    /* 判断是否有新数据 */
+    if (read_ptr == tail_addr)
+        return false;
+
+    while (!(read_ptr == tail_addr)) {
+
+        u32 word = ring_read_word(&read_ptr);
+
+        switch (evt_state) {
+
+        case EVT_SYNC_HEAD:
+            if (word == MAGIC_HEAD) {
+                event_cache[0] = word;
+                event_word_count = 1;
+                evt_state = EVT_COLLECT;
+            }
+            break;
+
+        case EVT_COLLECT:
+            event_cache[event_word_count++] = word;
+
+            /* 最大保护，防止跑飞 */
+            if (event_word_count >= MAX_EVENT_WORDS_NUM) {
+                evt_state = EVT_SYNC_HEAD;
+                event_word_count = 0;
+                break;
+            }
+
+            /* 判断是否收齐一个 event */
+            if (word == MAGIC_TAIL) {
+
+                /* 计算理论 event 长度 */
+                u32 expected_words = 5 + channel_num * 3;
+
+                if (event_word_count == expected_words) {
+                    /* 完整合法 event */
+                    memcpy(out_words, event_cache,
+                           event_word_count * sizeof(u32));
+                    *out_word_count = event_word_count;
+
+                    evt_state = EVT_SYNC_HEAD;
+                    event_word_count = 0;
+//                    last_wrap = curr_wrap;
+                    event_count++;
+                    return true;
+                } else {
+                    /* 长度不对，丢弃并重新同步 */
+                    evt_state = EVT_SYNC_HEAD;
+                    event_word_count = 0;
+                }
+            }
+            break;
+        }
+    }
+
+//    last_wrap = curr_wrap;
+    return false;
 }
+
+
+void send_events_udp(u32 channel_num)
+{
+    while (fetch_one_event(channel_num, event_words, &word_cnt)) {
+
+        u32 event_bytes = word_cnt * 4;
+        u32 net_word = 0;
+        if (udp_len + event_bytes > UDP_FRAME_LENGTH) {
+        	send_udp_frame(CMD_EVENT_DATA, udp_len, udp_buf);
+        	send_cnt++;
+            udp_len = 0;
+        }
+
+        for (u32 i = 0; i < word_cnt; i++) {
+        	net_word = htonl(event_words[i]);
+        	memcpy(&udp_buf[udp_len], &net_word, 4);
+        	udp_len += 4;
+        }
+
+    }
+
+    if (udp_len > 0) {
+    	send_udp_frame(CMD_EVENT_DATA, udp_len, udp_buf);
+    	send_cnt++;
+    	udp_len = 0;
+    }
+}
+
+
+
+
+
+
 
 
