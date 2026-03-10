@@ -61,7 +61,7 @@ void cytometer_stop_analyze();
 void cytometer_start_sort();
 void cytometer_stop_sort();
 
-void cytometer_set_drive_settings(u8_t type, u32_t delay, u32_t width, u32_t cooling_time);
+void cytometer_set_drive_settings(u8_t type, u32_t delay, u32_t width, u32_t cooling_time, u32_t coe);
 void cytometer_set_gate(struct GateData gate);
 void cytometer_set_speed_measure(u8_t preCh, u8_t postCh, int thresh, int dist, int max_diff_time);
 

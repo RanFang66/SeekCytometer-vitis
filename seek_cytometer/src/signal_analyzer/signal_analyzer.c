@@ -93,11 +93,12 @@ void write_speed_measure_settings(u8_t pre_ch, u8_t post_ch, int thresh, int dis
 
 
 
-void write_drive_settings(u32 type, u32 delay, u32 width, u32 cooling_time)
+void write_drive_settings(u32 type, u32 delay, u32 width, u32 cooling_time, u32 coe)
 {
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_DRIVE_TYPE, type);
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_DRIVE_DELAY, delay);
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_DRIVE_WIDTH, width);
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_COOLING_TIME, cooling_time);
+	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_DELAY_COE, coe);
 }
 

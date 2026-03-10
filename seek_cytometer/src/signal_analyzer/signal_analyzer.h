@@ -96,6 +96,7 @@
 #define SIGNAL_ANALYZER_GATE_Y_LOW			SIGNAL_ANALYZER_S00_AXI_SLV_REG40_OFFSET
 #define SIGNAL_ANALYZER_GATE_Y_HIGH			SIGNAL_ANALYZER_S00_AXI_SLV_REG41_OFFSET
 
+#define SIGNAL_ANALYZER_DELAY_COE			SIGNAL_ANALYZER_S00_AXI_SLV_REG47_OFFSET
 #define SIGNAL_ANALYZER_DRIVE_TYPE			SIGNAL_ANALYZER_S00_AXI_SLV_REG48_OFFSET
 #define SIGNAL_ANALYZER_DRIVE_DELAY			SIGNAL_ANALYZER_S00_AXI_SLV_REG49_OFFSET
 #define SIGNAL_ANALYZER_DRIVE_WIDTH			SIGNAL_ANALYZER_S00_AXI_SLV_REG50_OFFSET
@@ -195,7 +196,7 @@ void write_detetor_settings(int id, int thresh);
 void write_enabled_channels(u8 enabled_channels);
 void write_gate_settings(struct GateData data);
 void write_speed_measure_settings(u8_t preCh, u8_t postCh, int thresh, int dist, int max_diff_time);
-void write_drive_settings(u32 type, u32 delay, u32 width, u32 cooling_time);
+void write_drive_settings(u32 type, u32 delay, u32 width, u32 cooling_time, u32 coe);
 
 
 
