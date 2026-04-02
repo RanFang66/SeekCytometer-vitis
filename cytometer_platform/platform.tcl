@@ -187,3 +187,12 @@ platform generate -domains
 platform active {cytometer_platform}
 platform config -updatehw {E:/seek_cytometer/hardware/scripts/seek_cytometer/cytometer_platform_wrapper.xsa}
 platform generate
+platform active {cytometer_platform}
+platform config -updatehw {E:/seek_cytometer/hardware/scripts/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate
+platform active {cytometer_platform}
+platform config -updatehw {E:/seek_cytometer/hardware/scripts/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform active {cytometer_platform}
+platform config -updatehw {E:/seek_cytometer/hardware/scripts/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 

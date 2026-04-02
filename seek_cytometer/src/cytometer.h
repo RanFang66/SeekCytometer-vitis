@@ -7,6 +7,8 @@ extern "C" {
 
 #include <arch/cc.h>
 
+#define MAX_GATE_POINTS_NUM		(12)
+
 enum CYTOMETER_STATE {
     STATE_IDLE,
     STATE_ACQUIRING,
@@ -20,10 +22,18 @@ struct GateData {
 	int ch_y;
 	int type_x;
 	int type_y;
-	int x_min;
-	int x_max;
-	int y_min;
-	int y_max;
+	int gate_points_num;
+	int point_x[MAX_GATE_POINTS_NUM];
+	int point_y[MAX_GATE_POINTS_NUM];
+};
+
+struct DriveParas {
+	uint8_t drive_type;
+	uint32_t drive_delay;
+	uint32_t drive_width;
+	uint32_t cooling_time;
+	uint32_t speed_coee;
+	uint32_t min_event_interval;
 };
 
 
@@ -61,7 +71,7 @@ void cytometer_stop_analyze();
 void cytometer_start_sort();
 void cytometer_stop_sort();
 
-void cytometer_set_drive_settings(u8_t type, u32_t delay, u32_t width, u32_t cooling_time, u32_t coe);
+void cytometer_set_drive_settings(struct DriveParas paras);
 void cytometer_set_gate(struct GateData gate);
 void cytometer_set_speed_measure(u8_t preCh, u8_t postCh, int thresh, int dist, int max_diff_time);
 

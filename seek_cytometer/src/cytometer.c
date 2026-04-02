@@ -150,9 +150,9 @@ void cytometer_stop_sort()
     }
 }
 
-void cytometer_set_drive_settings(u8_t type, u32_t delay, u32_t width, u32_t cooling_time, u32_t coe)
+void cytometer_set_drive_settings(struct DriveParas paras)
 {
-	write_drive_settings(type, delay, width, cooling_time, coe);
+	write_drive_settings(paras);
 }
 
 

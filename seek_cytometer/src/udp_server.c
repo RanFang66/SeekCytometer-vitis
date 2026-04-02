@@ -222,13 +222,17 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 
 	case CMD_DRIVE_SETTINGS:
 	{
-		u8_t type = (u8_t)(data_start[0]);
-		u32_t drive_delay = big_endian_to_little_endian(data_start + 1);
-		u32_t drive_width = big_endian_to_little_endian(data_start + 5);
-		u32_t cooling_time = big_endian_to_little_endian(data_start + 9);
-		u32_t coe = big_endian_to_little_endian(data_start + 13);
-		cytometer_set_drive_settings(type, drive_delay, drive_width, cooling_time, coe);
-		LOG_INFO("Drive settings changed. %d, %d, %d, %d, %d", type, drive_delay, drive_width, cooling_time, coe);
+		struct DriveParas paras;
+		paras.drive_type = (u8_t)(data_start[0]);
+		paras.drive_delay = big_endian_to_little_endian(data_start + 1);
+		paras.drive_width = big_endian_to_little_endian(data_start + 5);
+		paras.cooling_time = big_endian_to_little_endian(data_start + 9);
+		paras.speed_coee = big_endian_to_little_endian(data_start + 13);
+		paras.min_event_interval = big_endian_to_little_endian(data_start + 17);
+		cytometer_set_drive_settings(paras);
+		LOG_INFO("Drive settings changed. %d, %d, %d, %d, %d, %d",
+				paras.drive_type, paras.drive_delay, paras.drive_width,
+				paras.cooling_time, paras.speed_coee, paras.min_event_interval);
 		break;
 	}
 
@@ -240,18 +244,23 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 		gate.ch_y = (data_start[2]);
 		gate.type_x = (data_start[3]);
 		gate.type_y = (data_start[4]);
-		gate.x_min = big_endian_to_little_endian(data_start + 5);
-		gate.y_max = big_endian_to_little_endian(data_start + 9);
+		gate.gate_points_num = (data_start[5]);
 
-
-
-		if (data_len >= 21) {
-			gate.x_max = big_endian_to_little_endian(data_start + 13);
-			gate.y_min = big_endian_to_little_endian(data_start + 17);
+		int bytesExpected = 6 + 2 * gate.gate_points_num * 4;
+		if (data_len < bytesExpected) {
+			LOG_ERROR("Gate setting error, Expected data bytes: %d, but received %d bytes", bytesExpected, data_len);
 		}
+
+//		u8_t *points_start = data_start + 6;
+
+		for (int i = 0; i < gate.gate_points_num; i++) {
+			gate.point_x[i] = big_endian_to_little_endian(data_start + 6 + 8*i);
+			gate.point_y[i] = big_endian_to_little_endian(data_start + 6 + 8*i + 4);
+		}
+
 		cytometer_set_gate(gate);
-		LOG_INFO("Gate Changed, type: %d, ChX = %d-%d, ChY = %d-%d, X(%d-%d), y(%d-%d)",
-				gate.gate_type, gate.ch_x, gate.type_x, gate.ch_y, gate.type_y, gate.x_min, gate.x_max, gate.y_min, gate.y_max);
+		LOG_INFO("Gate Changed, type: %d, ChX = %d-%d, ChY = %d-%d, %d gate points",
+				gate.gate_type, gate.ch_x, gate.type_x, gate.ch_y, gate.type_y, gate.gate_points_num);
 		break;
 	}
 
