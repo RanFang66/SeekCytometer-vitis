@@ -80,21 +80,25 @@ void write_gate_settings(struct GateData data)
 
 }
 
-void write_speed_measure_settings(u8_t pre_ch, u8_t post_ch, int thresh, int dist, int max_diff_time)
+void write_speed_measure_settings(u8_t speed_en, u8_t pre_ch, u8_t post_ch, int max_diff_time, int dist)
 {
-	u32 speed_ch = 0;
+	// Set or clear speed measure enable bit in control register
+	u32 control_reg = SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_CONTROL);
+	if (speed_en) {
+		control_reg |= SPEED_MEASURE_EN_MASK;
+	} else {
+		control_reg &= ~SPEED_MEASURE_EN_MASK;
+	}
+	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_CONTROL, control_reg);
+
 	// Because channel start from 0 at FPGA, so minus 1.
 	if (pre_ch > 0) pre_ch--;
 	if (post_ch > 0) post_ch--;
-	speed_ch = ((u32)post_ch << 8) | ((u32)pre_ch);
-	u32 thresh_addr = SIGNAL_ANALYZER_THRESH_CH1 + pre_ch * 4;
+	u32 speed_ch = ((u32)post_ch << 8) | ((u32)pre_ch);
 
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_CH, speed_ch);
-	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, thresh_addr, thresh);
-	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_DIST, dist);
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_MAX_DIFF, max_diff_time);
-
-
+	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_DIST, dist);
 }
 
 

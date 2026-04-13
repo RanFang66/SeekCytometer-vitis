@@ -73,7 +73,7 @@ void cytometer_stop_sort();
 
 void cytometer_set_drive_settings(struct DriveParas paras);
 void cytometer_set_gate(struct GateData gate);
-void cytometer_set_speed_measure(u8_t preCh, u8_t postCh, int thresh, int dist, int max_diff_time);
+void cytometer_set_speed_measure(u8_t speed_en, u8_t preCh, u8_t postCh, int max_diff_time, int dist);
 
 u8_t waveform_is_enabled();
 u8_t waveform_enabled_channel_num();

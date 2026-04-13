@@ -125,6 +125,7 @@
 
 #define ANALYZE_ENABLE_MASK					0x00000001
 #define SORT_ENABLE_MASK					0x00000002
+#define SPEED_MEASURE_EN_MASK				0x00000004
 #define DRIVE_TYPE_MASK						0x00000001
 #define HIGH_PURITY_EN_MASK					0x00000002
 #define GATE_TYPE_MASK						0x00000007
@@ -206,7 +207,7 @@ void stop_sort();
 void write_detetor_settings(int id, int thresh);
 void write_enabled_channels(u8 enabled_channels);
 void write_gate_settings(struct GateData data);
-void write_speed_measure_settings(u8_t preCh, u8_t postCh, int thresh, int dist, int max_diff_time);
+void write_speed_measure_settings(u8_t speed_en, u8_t preCh, u8_t postCh, int max_diff_time, int dist);
 void write_drive_settings(struct DriveParas paras);
 
 

@@ -265,15 +265,18 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 	}
 
 	case CMD_SPEED_MEASURE_SETTINGS:
-		u8_t preCh = data_start[0];
-		u8_t postCh = data_start[1];
-		int preThresh = big_endian_to_little_endian(data_start+2);
-		int dist = big_endian_to_little_endian(data_start+6);
-		int max_diff_time = big_endian_to_little_endian(data_start+10);
+	{
+		u8_t speed_en = data_start[0];
+		u8_t preCh = data_start[1];
+		u8_t postCh = data_start[2];
+		int max_diff_time = big_endian_to_little_endian(data_start + 3);
+		int dist = big_endian_to_little_endian(data_start + 7);
 
-		cytometer_set_speed_measure(preCh, postCh, preThresh, dist, max_diff_time);
-		LOG_INFO("Speed Measure Setting Changed, PreCh = %d, PostCh = %d, PreThresh = %d, max_diff_time = %d.", preCh, postCh, preThresh, max_diff_time);
+		cytometer_set_speed_measure(speed_en, preCh, postCh, max_diff_time, dist);
+		LOG_INFO("Speed Measure Setting Changed, en = %d, PreCh = %d, PostCh = %d, maxTimeSpan = %d, dist = %d.",
+				speed_en, preCh, postCh, max_diff_time, dist);
 		break;
+	}
 
 	case CMD_SORTING_START:
     {
