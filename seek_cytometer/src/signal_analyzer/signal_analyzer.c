@@ -104,6 +104,26 @@ void write_speed_measure_settings(u8_t speed_en, u8_t pre_ch, u8_t post_ch, int 
 
 
 
+void write_delay_refer_settings(u8_t en, u8_t ch_id)
+{
+	// Bit3 of slv_reg0 (control reg): delay refer enable
+	u32 control_reg = SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_CONTROL);
+	if (en) {
+		control_reg |= DELAY_REFER_EN_MASK;
+	} else {
+		control_reg &= ~DELAY_REFER_EN_MASK;
+	}
+	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_CONTROL, control_reg);
+
+	// Bits 18:16 of slv_reg52 (SPEED_CH reg): delay refer channel id (FPGA channel starts from 0)
+	if (ch_id > 0) ch_id--;
+	u32 speed_ch = SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_CH);
+	speed_ch &= ~DELAY_REFER_CH_MASK;
+	speed_ch |= (((u32)ch_id << 16) & DELAY_REFER_CH_MASK);
+	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_CH, speed_ch);
+}
+
+
 void write_drive_settings(struct DriveParas paras)
 {
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_DRIVE_TYPE, paras.drive_type);

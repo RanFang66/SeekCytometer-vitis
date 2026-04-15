@@ -278,6 +278,16 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 		break;
 	}
 
+	case CMD_DELAY_REFER_SETTINGS:
+	{
+		u8_t delay_refer_en = data_start[0];
+		u8_t ref_ch_id = data_start[1];
+
+		cytometer_set_delay_refer(delay_refer_en, ref_ch_id);
+		LOG_INFO("Delay Refer Setting Changed, en = %d, refChId = %d.", delay_refer_en, ref_ch_id);
+		break;
+	}
+
 	case CMD_SORTING_START:
     {
         cytometer_start_sort();
