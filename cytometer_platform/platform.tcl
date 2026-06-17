@@ -230,3 +230,19 @@ platform generate -domains
 platform active {cytometer_platform}
 platform config -updatehw {E:/seek_cytometer/hardware/scripts/seek_cytometer/cytometer_platform_wrapper.xsa}
 platform generate -domains 
+platform generate
+platform clean
+platform generate
+platform active {cytometer_platform}
+platform config -updatehw {D:/WorkSpace/seekgene/seek_cytometer/gitee/SeekCytometer-vivado/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform clean
+platform generate
+platform generate -domains standalone_domain 
+platform config -updatehw {D:/WorkSpace/seekgene/seek_cytometer/gitee/SeekCytometer-vivado/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform config -updatehw {D:/WorkSpace/seekgene/seek_cytometer/gitee/SeekCytometer-vivado/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform config -updatehw {D:/WorkSpace/seekgene/seek_cytometer/gitee/SeekCytometer-vivado/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform config -updatehw {D:/WorkSpace/seekgene/seek_cytometer/gitee/SeekCytometer-vivado/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains standalone_domain,zynqmp_fsbl,zynqmp_pmufw 

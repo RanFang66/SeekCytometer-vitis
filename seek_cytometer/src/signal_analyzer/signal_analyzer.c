@@ -3,6 +3,7 @@
 /***************************** Include Files *******************************/
 #include "signal_analyzer.h"
 #include "xil_io.h"
+#include "xil_cache.h"
 /************************** Function Definitions ***************************/
 
 void start_analyze()
@@ -79,6 +80,78 @@ void write_gate_settings(struct GateData data)
 	}
 
 }
+
+int write_gates_at(int i ,struct GateData *data, uint8_t tail)
+{
+	int j = 0;
+	uint32_t *p, check;
+	if (!data || i < 0 || i >= MAX_GATE_NUM || data->gate_points_num > 12) {
+		return -1;
+	}
+	if (data->ch_x > 0 && data->ch_y > 0) {
+		data->ch_x--;
+		data->ch_y--;
+	} else {
+		return -1;
+	}
+	PL_GateConfig_t * gate_config = GATE_CONFIG(i);
+	gate_config->header = tail ? HEADER_TAIL_CODE : HEADER_BODY_CODE;
+	gate_config->checkbits = 0;
+
+	switch(data->gate_type) {
+	case 0:	// Interval
+		gate_config->gate_config = GT_INTERVAL;
+		break;
+	case 1:	// Rectangle
+		gate_config->gate_config = GT_RECTANGLE;
+		break;
+	case 2:	// Polygon
+		gate_config->gate_config = GT_POLYGON;
+		break;
+	case 3:	// Ellipse
+		gate_config->gate_config = GT_ELLIPSE;
+		break;
+	case 4:	// Quadrant
+		gate_config->gate_config = GT_NO_GATE;
+		break;
+	default: //
+		gate_config->gate_config = GT_NO_GATE;
+		break;
+	}
+	// bit[15:8] 表示点占用的32bits内存个数， bit[31:16] 用于表示参数 比如象限 现在表示点个数
+	gate_config->gate_config |= (data->gate_points_num << 9) | (data->gate_points_num << 16);
+
+	gate_config->channel_config = (data->ch_x & GATE_CH_X_MASK)
+								| ((data->type_x << 8) & GATE_TYPE_X_MASK)
+								| ((data->ch_y << 16) & GATE_CH_Y_MASK)
+								| ((data->type_y << 24) & GATE_TYPE_Y_MASK);
+	for (j = 0; j < MAX_GATE_POINTS_NUM; j++) {
+		gate_config->points[j].pointx = data->point_x[j];
+		gate_config->points[j].pointy = data->point_y[j];
+	}
+	check = 0;
+	for (j = 0, p = (uint32_t *)gate_config; j < 4 + data->gate_points_num * 2; j++, p++) {
+		check ^= *p;
+	}
+	gate_config->checkbits = check;
+	Xil_DCacheFlushRange((INTPTR)gate_config, sizeof(PL_GateConfig_t));
+	return 0;
+}
+
+void reset_gates(PL_GateType_e gate)
+{
+	PL_GateConfig_t * gate_config = GATE_CONFIG(0);
+	gate_config->header = HEADER_TAIL_CODE;
+	gate_config->checkbits = HEADER_TAIL_CODE ^ gate;
+	gate_config->gate_config = gate;
+	gate_config->channel_config = 0;
+	for (int i = 0; i < MAX_GATE_POINTS_NUM; i++) {
+		gate_config->points[i].pointx = 0;
+		gate_config->points[i].pointy = 0;
+	}
+	Xil_DCacheFlushRange((INTPTR)gate_config, sizeof(PL_GateConfig_t));
+}
+
 
 void write_speed_measure_settings(u8_t speed_en, u8_t pre_ch, u8_t post_ch, int max_diff_time, int dist)
 {

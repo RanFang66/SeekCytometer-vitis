@@ -7,6 +7,7 @@ extern "C" {
 
 #include <arch/cc.h>
 
+#define MAX_GATE_NUM			(4)
 #define MAX_GATE_POINTS_NUM		(12)
 
 enum CYTOMETER_STATE {
@@ -26,6 +27,7 @@ struct GateData {
 	int point_x[MAX_GATE_POINTS_NUM];
 	int point_y[MAX_GATE_POINTS_NUM];
 };
+
 
 struct DriveParas {
 	uint8_t drive_type;

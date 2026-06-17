@@ -50,10 +50,6 @@ extern u8 dma_s2mm_flag;
 extern u8 send_event_data_flag;
 
 
-
-
-
-
 static void print_ip(const char *msg, const ip_addr_t *ip)
 {
 	print(msg);
@@ -238,29 +234,59 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 
 	case CMD_GATE_SETTINGS:
 	{
-		struct GateData gate;
-		gate.gate_type = (data_start[0]);
-		gate.ch_x = (data_start[1]);
-		gate.ch_y = (data_start[2]);
-		gate.type_x = (data_start[3]);
-		gate.type_y = (data_start[4]);
-		gate.gate_points_num = (data_start[5]);
-
-		int bytesExpected = 6 + 2 * gate.gate_points_num * 4;
-		if (data_len < bytesExpected) {
-			LOG_ERROR("Gate setting error, Expected data bytes: %d, but received %d bytes", bytesExpected, data_len);
+		struct GateData gate = {0};
+		u8_t *pdata = (u8_t *)data_start;
+		u16_t data_left;
+		uint8_t size = *pdata++;
+		uint8_t i;
+		int error = 0;
+		if (size > MAX_GATE_NUM) {
+			LOG_ERROR("Gate setting error, max size 4 but received %d.", size);
+			break;
 		}
 
-//		u8_t *points_start = data_start + 6;
-
-		for (int i = 0; i < gate.gate_points_num; i++) {
-			gate.point_x[i] = big_endian_to_little_endian(data_start + 6 + 8*i);
-			gate.point_y[i] = big_endian_to_little_endian(data_start + 6 + 8*i + 4);
+		if (size == 0) {
+			reset_gates(GT_ALL);
+			LOG_INFO("Gate all pass set");
+			break;
 		}
 
-		cytometer_set_gate(gate);
-		LOG_INFO("Gate Changed, type: %d, ChX = %d-%d, ChY = %d-%d, %d gate points",
-				gate.gate_type, gate.ch_x, gate.type_x, gate.ch_y, gate.type_y, gate.gate_points_num);
+		for (i = 0; i < size; i++) {
+			gate.gate_type = *pdata++;
+			gate.ch_x = *pdata++;
+			gate.ch_y = *pdata++;
+			gate.type_x = *pdata++;
+			gate.type_y = *pdata++;
+			gate.gate_points_num = *pdata++;
+			data_left = data_len - (pdata - data_start);
+			if (data_left < gate.gate_points_num * 4 * 2) {
+				LOG_ERROR("Gate setting error, Gate %d need bytes: %d, but %d bytes left", i, gate.gate_points_num * 4 * 2, data_left);
+				error = -1;
+				break;
+			}
+			if (gate.gate_points_num > MAX_GATE_POINTS_NUM) {
+				LOG_ERROR("Gate setting error, Gate %d points_num %d  > %d", i, gate.gate_points_num, MAX_GATE_POINTS_NUM);
+				error = -1;
+				break;
+			}
+
+			for (int j = 0; j < gate.gate_points_num; j++) {
+				gate.point_x[j] = big_endian_to_little_endian(pdata);
+				gate.point_y[j] = big_endian_to_little_endian(pdata + 4);
+				pdata += 8;
+			}
+			error = write_gates_at(i, &gate, (i + 1) == size ? 1: 0);
+			if (error) {
+				LOG_ERROR("Gate setting error, Gate %d write failed", i);
+				break;
+			}
+		}
+		if (error) {
+			reset_gates(GT_NO_GATE);
+			LOG_INFO("Gate Path reset");
+		}
+
+		LOG_INFO("Gate Path set, Counts: %d", size);
 		break;
 	}
 

@@ -134,8 +134,34 @@
 #define GATE_POINTS_NUM_MASK				0x000000F0
 
 
+#define GATE_CONFIG_ADDR	XPAR_AXI_BRAM_CTRL_1_S_AXI_BASEADDR
+#define HEADER_BODY_CODE    0x424F4459
+#define HEADER_TAIL_CODE    0x5441494C
+typedef enum {
+	GT_NO_GATE = 0,
+	GT_INTERVAL  = 1,
+	GT_RECTANGLE = 2,
+	GT_POLYGON   = 3,
+	GT_ELLIPSE   = 4,
+	GT_ALL       = 5
+} PL_GateType_e;
 
 
+
+typedef struct {
+	volatile int32_t pointx;
+	volatile int32_t pointy;
+} Point_t;
+
+typedef struct {
+	volatile uint32_t header;
+	volatile uint32_t gate_config;
+	volatile uint32_t channel_config;
+	volatile uint32_t checkbits;
+	Point_t points[MAX_GATE_POINTS_NUM];	//
+} PL_GateConfig_t;
+
+#define GATE_CONFIG(i)	((PL_GateConfig_t*)GATE_CONFIG_ADDR + (i))
 /**************************** Type Definitions *****************************/
 /**
  *
@@ -213,6 +239,7 @@ void write_speed_measure_settings(u8_t speed_en, u8_t preCh, u8_t postCh, int ma
 void write_delay_refer_settings(u8_t en, u8_t ch_id);
 void write_drive_settings(struct DriveParas paras);
 
-
+int write_gates_at(int i ,struct GateData* data, uint8_t tail);
+void reset_gates(PL_GateType_e gate);
 
 #endif // SIGNAL_ANALYZER_H

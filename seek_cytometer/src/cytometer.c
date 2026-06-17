@@ -106,6 +106,7 @@ void init_cytometer()
         waveform_channel_enabled[i] = 0;
     }
     init_detectors();
+    reset_gates(GT_NO_GATE);
 
 	LOG_INFO("Initialize cytometer parameters ok.");
 }
