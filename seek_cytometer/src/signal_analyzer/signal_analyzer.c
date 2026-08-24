@@ -98,26 +98,27 @@ int write_gates_at(int i ,struct GateData *data, uint8_t tail)
 	gate_config->header = tail ? HEADER_TAIL_CODE : HEADER_BODY_CODE;
 	gate_config->checkbits = 0;
 
-	switch(data->gate_type) {
-	case 0:	// Interval
-		gate_config->gate_config = GT_INTERVAL;
-		break;
-	case 1:	// Rectangle
-		gate_config->gate_config = GT_RECTANGLE;
-		break;
-	case 2:	// Polygon
-		gate_config->gate_config = GT_POLYGON;
-		break;
-	case 3:	// Ellipse
-		gate_config->gate_config = GT_ELLIPSE;
-		break;
-	case 4:	// Quadrant
-		gate_config->gate_config = GT_NO_GATE;
-		break;
-	default: //
-		gate_config->gate_config = GT_NO_GATE;
-		break;
-	}
+	gate_config->gate_config = (data->gate_type & 0xFF);
+//	switch(data->gate_type) {
+//	case 0:	// Interval
+//		gate_config->gate_config = GT_INTERVAL;
+//		break;
+//	case 1:	// Rectangle
+//		gate_config->gate_config = GT_RECTANGLE;
+//		break;
+//	case 2:	// Polygon
+//		gate_config->gate_config = GT_POLYGON;
+//		break;
+//	case 3:	// Ellipse
+//		gate_config->gate_config = GT_ELLIPSE;
+//		break;
+//	case 4:	// Quadrant
+//		gate_config->gate_config = GT_NO_GATE;
+//		break;
+//	default: //
+//		gate_config->gate_config = GT_NO_GATE;
+//		break;
+//	}
 	// bit[15:8] 表示点占用的32bits内存个数， bit[31:16] 用于表示参数 比如象限 现在表示点个数
 	gate_config->gate_config |= (data->gate_points_num << 9) | (data->gate_points_num << 16);
 

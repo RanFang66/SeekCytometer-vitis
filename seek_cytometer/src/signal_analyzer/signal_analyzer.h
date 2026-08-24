@@ -143,7 +143,8 @@ typedef enum {
 	GT_RECTANGLE = 2,
 	GT_POLYGON   = 3,
 	GT_ELLIPSE   = 4,
-	GT_ALL       = 5
+	GT_QUADRANT  = 5,
+	GT_ALL       = 6
 } PL_GateType_e;
 
 
