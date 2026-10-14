@@ -224,11 +224,10 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 		paras.drive_width = big_endian_to_little_endian(data_start + 5);
 		paras.cooling_time = big_endian_to_little_endian(data_start + 9);
 		paras.speed_coee = big_endian_to_little_endian(data_start + 13);
-		paras.min_event_interval = big_endian_to_little_endian(data_start + 17);
 		cytometer_set_drive_settings(paras);
-		LOG_INFO("Drive settings changed. %d, %d, %d, %d, %d, %d",
+		LOG_INFO("Drive settings changed. %d, %d, %d, %d, %d",
 				paras.drive_type, paras.drive_delay, paras.drive_width,
-				paras.cooling_time, paras.speed_coee, paras.min_event_interval);
+				paras.cooling_time, paras.speed_coee);
 		break;
 	}
 

@@ -35,7 +35,6 @@ struct DriveParas {
 	uint32_t drive_width;
 	uint32_t cooling_time;
 	uint32_t speed_coee;
-	uint32_t min_event_interval;
 };
 
 
