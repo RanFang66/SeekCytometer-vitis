@@ -53,8 +53,26 @@
 #include "axi_dma.h"
 #include "cytometer.h"
 #include "ad_sample.h"
+#include "signal_analyzer.h"
 extern u8 send_udp_frame_flag;
 u8 debug_flag = 0;
+
+// ============================================================================
+// [临时调试开关] 信号基线识别与校正 上机验证
+// ----------------------------------------------------------------------------
+// 复位默认 baseline_en = 0（基线校正关闭），上机验证需显式置 1。
+// 阶段4 的 UDP 命令映射尚未实现，故用此编译期开关临时开启。
+// 测试完成后：将 DEBUG_BASELINE_ENABLE 改为 0（或删除整块），恢复默认行为。
+//
+// 参数：
+//   write_baseline_settings(baseline_en, alpha_shift, slope_th)
+//     baseline_en = 1   开启基线校正（相对阈值 + 度量级减）
+//     alpha_shift = 10  慢跟踪 EMA α = 2^-10（τ≈1024 拍）
+//     slope_th    = 0   斜率二级门控禁用（第一阶段默认，待标定后再启用）
+//   write_baseline_params(acquire_len, guard_len, max_pulse_wid)  // 可选
+//     复位默认 0xFF080400：acquire_len=1024 / guard_len=8 / max_pulse_wid=255
+// ============================================================================
+#define DEBUG_BASELINE_ENABLE  1
 
 
 int main()
@@ -62,6 +80,12 @@ int main()
     init_platform();
 
     init_cytometer();
+
+#if DEBUG_BASELINE_ENABLE
+    // [临时调试] 开启基线校正（复位默认关闭），测试完成后删除本块或改 DEBUG_BASELINE_ENABLE=0
+    write_baseline_settings(1, 10, 0);
+    // write_baseline_params(1024, 8, 255);  // 如需覆盖运行时参数再取消注释
+#endif
 
     LOG_INFO("-----------Start Seek Cytometer----------");
 
