@@ -115,7 +115,7 @@
 
 #define SIGNAL_ANALYZER_BRAM_STATE			SIGNAL_ANALYZER_S00_AXI_SLV_REG56_OFFSET
 #define SIGNAL_ANALYZER_BASELINE_CTRL		SIGNAL_ANALYZER_S00_AXI_SLV_REG2_OFFSET
-#define SIGNAL_ANALYZER_BASELINE_PARAM		SIGNAL_ANALYZER_S00_AXI_SLV_REG3_OFFSET	// reserved (compile-time in PL)
+#define SIGNAL_ANALYZER_BASELINE_PARAM		SIGNAL_ANALYZER_S00_AXI_SLV_REG3_OFFSET	// runtime: acquire_len[15:0]/guard_len[23:16]/max_pulse_wid[31:24]
 #define SIGNAL_ANALYZER_BASELINE_MON_CH		SIGNAL_ANALYZER_S00_AXI_SLV_REG42_OFFSET
 #define SIGNAL_ANALYZER_BASELINE_MON		SIGNAL_ANALYZER_S00_AXI_SLV_REG43_OFFSET
 
@@ -249,6 +249,7 @@ void write_speed_measure_settings(u8_t speed_en, u8_t preCh, u8_t postCh, int ma
 void write_delay_refer_settings(u8_t en, u8_t ch_id);
 void write_drive_settings(struct DriveParas paras);
 void write_baseline_settings(u8 baseline_en, u8 alpha_shift, u8 slope_th);
+void write_baseline_params(u16 acquire_len, u8 guard_len, u8 max_pulse_wid);
 void baseline_reacquire(void);
 u32 read_baseline_mon(u8 ch_id);
 

@@ -220,6 +220,15 @@ void write_baseline_settings(u8 baseline_en, u8 alpha_shift, u8 slope_th)
 }
 
 
+void write_baseline_params(u16 acquire_len, u8 guard_len, u8 max_pulse_wid)
+{
+	u32 param = ((u32)(max_pulse_wid & 0xFF) << 24)
+	          | ((u32)(guard_len & 0xFF) << 16)
+	          | ((u32)(acquire_len & 0xFFFF));
+	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_PARAM, param);
+}
+
+
 void baseline_reacquire(void)
 {
 	u32 ctrl = SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_CTRL);
