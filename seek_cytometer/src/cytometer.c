@@ -174,7 +174,7 @@ void cytometer_set_delay_refer(u8_t en, u8_t ch_id)
 }
 
 void cytometer_set_baseline(u8_t baseline_en, u8_t alpha_shift, u8_t slope_th,
-                            u8_t acquire_force, u16_t acquire_len, u8_t guard_len, u8_t max_pulse_wid)
+                            u8_t acquire_force, u16_t acquire_len, u8_t guard_len, u16_t max_pulse_wid)
 {
 	write_baseline_settings(baseline_en, alpha_shift, slope_th);
 	write_baseline_params(acquire_len, guard_len, max_pulse_wid);

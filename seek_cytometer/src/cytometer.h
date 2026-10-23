@@ -81,7 +81,7 @@ void cytometer_set_delay_refer(u8_t en, u8_t ch_id);
  * acquire_force=1 时在写入参数后再做一次 baseline_reacquire (置位又清零 slv_reg2[1]).
  */
 void cytometer_set_baseline(u8_t baseline_en, u8_t alpha_shift, u8_t slope_th,
-                            u8_t acquire_force, u16_t acquire_len, u8_t guard_len, u8_t max_pulse_wid);
+                            u8_t acquire_force, u16_t acquire_len, u8_t guard_len, u16_t max_pulse_wid);
 /* 回读 8 通道基线监视值, 每项 = slv_reg43: [18]=baseline_valid, [17:0]=baseline 整数码. */
 void cytometer_read_baseline_mon(u32_t *values_8);
 

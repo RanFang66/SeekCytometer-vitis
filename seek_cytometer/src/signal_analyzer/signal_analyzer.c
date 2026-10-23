@@ -215,18 +215,18 @@ void write_baseline_settings(u8 baseline_en, u8 alpha_shift, u8 slope_th)
 	if (baseline_en) {
 		ctrl |= BASELINE_EN_MASK;
 	}
-	ctrl |= ((u32)(alpha_shift & 0x0F) << 2) & ALPHA_SHIFT_MASK;
+	ctrl |= ((u32)(alpha_shift & 0x1F) << 2) & ALPHA_SHIFT_MASK;
 	ctrl |= ((u32)(slope_th & 0x3F) << 8) & SLOPE_TH_MASK;
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_CTRL, ctrl);
 }
 
 
-void write_baseline_params(u16 acquire_len, u8 guard_len, u8 max_pulse_wid)
+void write_baseline_params(u16 acquire_len, u8 guard_len, u16 max_pulse_wid)
 {
-	u32 param = ((u32)(max_pulse_wid & 0xFF) << 24)
-	          | ((u32)(guard_len & 0xFF) << 16)
+	u32 param = ((u32)(guard_len & 0xFF) << 16)
 	          | ((u32)(acquire_len & 0xFFFF));
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_PARAM, param);
+	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_PARAM2, (u32)(max_pulse_wid & 0xFFFF));
 }
 
 
@@ -242,6 +242,10 @@ u32 read_baseline_mon(u8 ch_id)
 {
 	// Select channel (FPGA channel index, 0-based)
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_MON_CH, (u32)(ch_id & BASELINE_MON_CH_MASK));
+	// Flush the posted mon_ch write before reading: on Zynq a read to a different
+	// PL address is not ordered after a write, so without this the monitor read can
+	// return the previous channel's baseline (the "occasional jump" symptom).
+	(void)SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_MON_CH);
 	// slv_reg43: [18]=baseline_valid, [17:0]=baseline (integer ADC code)
 	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_MON);
 }

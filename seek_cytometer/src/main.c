@@ -70,7 +70,7 @@ u8 debug_flag = 0;
 //     alpha_shift = 10  慢跟踪 EMA α = 2^-10（τ≈1024 拍）
 //     slope_th    = 0   斜率二级门控禁用（第一阶段默认，待标定后再启用）
 //   write_baseline_params(acquire_len, guard_len, max_pulse_wid)  // 可选
-//     复位默认 0xFF080400：acquire_len=1024 / guard_len=8 / max_pulse_wid=255
+//     复位默认：slv_reg3=0x00080400 (acquire_len=1024 / guard_len=8)，slv_reg4=255 (max_pulse_wid=255)
 // ============================================================================
 #define DEBUG_BASELINE_ENABLE  1
 

@@ -315,8 +315,8 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 
 	case CMD_BASELINE_SETTINGS:
 	{
-		if (data_len < 8) {
-			LOG_ERROR("Baseline settings frame too short: %d bytes (need 8).", data_len);
+		if (data_len < 9) {
+			LOG_ERROR("Baseline settings frame too short: %d bytes (need 9).", data_len);
 			break;
 		}
 		u8_t baseline_en    = (u8_t)data_start[0];
@@ -325,7 +325,7 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 		u8_t acquire_force  = (u8_t)data_start[3];
 		u16_t acquire_len   = ((u16_t)data_start[4] << 8) | (u16_t)data_start[5];
 		u8_t guard_len      = (u8_t)data_start[6];
-		u8_t max_pulse_wid  = (u8_t)data_start[7];
+		u16_t max_pulse_wid = ((u16_t)data_start[7] << 8) | (u16_t)data_start[8];
 
 		cytometer_set_baseline(baseline_en, alpha_shift, slope_th, acquire_force,
 		                       acquire_len, guard_len, max_pulse_wid);
