@@ -119,7 +119,8 @@ int write_gates_at(int i ,struct GateData *data, uint8_t tail)
 //		gate_config->gate_config = GT_NO_GATE;
 //		break;
 //	}
-	// bit[15:8] 表示点占用的32bits内存个数， bit[31:16] 用于表示参数 比如象限 现在表示点个数
+	// bit[15:8] = number of 32-bit memory units occupied by the points; bit[31:16]
+	// was for a parameter (e.g. quadrant type) but is now reused as the point count.
 	gate_config->gate_config |= (data->gate_points_num << 9) | (data->gate_points_num << 16);
 
 	gate_config->channel_config = (data->ch_x & GATE_CH_X_MASK)

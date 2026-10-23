@@ -313,6 +313,43 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 		break;
 	}
 
+	case CMD_BASELINE_SETTINGS:
+	{
+		if (data_len < 8) {
+			LOG_ERROR("Baseline settings frame too short: %d bytes (need 8).", data_len);
+			break;
+		}
+		u8_t baseline_en    = (u8_t)data_start[0];
+		u8_t alpha_shift    = (u8_t)data_start[1];
+		u8_t slope_th       = (u8_t)data_start[2];
+		u8_t acquire_force  = (u8_t)data_start[3];
+		u16_t acquire_len   = ((u16_t)data_start[4] << 8) | (u16_t)data_start[5];
+		u8_t guard_len      = (u8_t)data_start[6];
+		u8_t max_pulse_wid  = (u8_t)data_start[7];
+
+		cytometer_set_baseline(baseline_en, alpha_shift, slope_th, acquire_force,
+		                       acquire_len, guard_len, max_pulse_wid);
+		LOG_INFO("Baseline settings changed: en=%d, alpha=%d, slope=%d, force=%d, acquireLen=%d, guard=%d, maxWid=%d.",
+		         baseline_en, alpha_shift, slope_th, acquire_force, acquire_len, guard_len, max_pulse_wid);
+		break;
+	}
+
+	case CMD_BASELINE_MONITOR:
+	{
+		// 空载荷 = 请求回读; SoC 用同一命令回一帧 32 字节 (8 x u32 大端, 每通道即 slv_reg43).
+		u32_t values[AD_CHANNEL_NUM];
+		u8_t  mon_data[AD_CHANNEL_NUM * 4];
+		cytometer_read_baseline_mon(values);
+		for (int i = 0; i < AD_CHANNEL_NUM; i++) {
+			mon_data[4*i + 0] = (u8_t)(values[i] >> 24);
+			mon_data[4*i + 1] = (u8_t)(values[i] >> 16);
+			mon_data[4*i + 2] = (u8_t)(values[i] >> 8);
+			mon_data[4*i + 3] = (u8_t)(values[i]);
+		}
+		send_udp_frame(CMD_BASELINE_MONITOR, sizeof(mon_data), mon_data);
+		break;
+	}
+
 	case CMD_SORTING_START:
     {
         cytometer_start_sort();

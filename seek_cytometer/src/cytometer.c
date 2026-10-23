@@ -173,6 +173,23 @@ void cytometer_set_delay_refer(u8_t en, u8_t ch_id)
 	write_delay_refer_settings(en, ch_id);
 }
 
+void cytometer_set_baseline(u8_t baseline_en, u8_t alpha_shift, u8_t slope_th,
+                            u8_t acquire_force, u16_t acquire_len, u8_t guard_len, u8_t max_pulse_wid)
+{
+	write_baseline_settings(baseline_en, alpha_shift, slope_th);
+	write_baseline_params(acquire_len, guard_len, max_pulse_wid);
+	if (acquire_force) {
+		baseline_reacquire();
+	}
+}
+
+void cytometer_read_baseline_mon(u32_t *values_8)
+{
+	for (int i = 0; i < AD_CHANNEL_NUM; i++) {
+		values_8[i] = (u32_t)read_baseline_mon((u8)i);
+	}
+}
+
 u8_t waveform_enabled_channels()
 {
 	return waveform_channels;
