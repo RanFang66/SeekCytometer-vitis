@@ -250,3 +250,9 @@ u32 read_baseline_mon(u8 ch_id)
 	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_MON);
 }
 
+u32 read_baseline_debug(void)
+{
+	// slv_reg44: [8]=analyze_en, [7:0]=pulse_active (8 channels)
+	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_DEBUG);
+}
+

@@ -336,9 +336,10 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 
 	case CMD_BASELINE_MONITOR:
 	{
-		// 空载荷 = 请求回读; SoC 用同一命令回一帧 32 字节 (8 x u32 大端, 每通道即 slv_reg43).
+		// 空载荷 = 请求回读; SoC 用同一命令回一帧 36 字节 (8 x u32 大端, 每通道即 slv_reg43,
+		// 末尾再加 1 个 u32 调试状态 = slv_reg44: [8]=analyze_en, [7:0]=pulse_active).
 		u32_t values[AD_CHANNEL_NUM];
-		u8_t  mon_data[AD_CHANNEL_NUM * 4];
+		u8_t  mon_data[AD_CHANNEL_NUM * 4 + 4];
 		cytometer_read_baseline_mon(values);
 		for (int i = 0; i < AD_CHANNEL_NUM; i++) {
 			mon_data[4*i + 0] = (u8_t)(values[i] >> 24);
@@ -346,6 +347,11 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 			mon_data[4*i + 2] = (u8_t)(values[i] >> 8);
 			mon_data[4*i + 3] = (u8_t)(values[i]);
 		}
+		u32_t dbg = cytometer_read_baseline_debug();
+		mon_data[32] = (u8_t)(dbg >> 24);
+		mon_data[33] = (u8_t)(dbg >> 16);
+		mon_data[34] = (u8_t)(dbg >> 8);
+		mon_data[35] = (u8_t)(dbg);
 		send_udp_frame(CMD_BASELINE_MONITOR, sizeof(mon_data), mon_data);
 		break;
 	}

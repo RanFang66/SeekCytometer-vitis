@@ -84,6 +84,8 @@ void cytometer_set_baseline(u8_t baseline_en, u8_t alpha_shift, u8_t slope_th,
                             u8_t acquire_force, u16_t acquire_len, u8_t guard_len, u16_t max_pulse_wid);
 /* 回读 8 通道基线监视值, 每项 = slv_reg43: [18]=baseline_valid, [17:0]=baseline 整数码. */
 void cytometer_read_baseline_mon(u32_t *values_8);
+/* 回读调试状态 = slv_reg44: [8]=analyze_en, [7:0]=pulse_active. */
+u32_t cytometer_read_baseline_debug(void);
 
 u8_t waveform_is_enabled();
 u8_t waveform_enabled_channel_num();

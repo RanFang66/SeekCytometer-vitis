@@ -190,6 +190,11 @@ void cytometer_read_baseline_mon(u32_t *values_8)
 	}
 }
 
+u32_t cytometer_read_baseline_debug(void)
+{
+	return (u32_t)read_baseline_debug();
+}
+
 u8_t waveform_enabled_channels()
 {
 	return waveform_channels;

@@ -119,6 +119,7 @@
 #define SIGNAL_ANALYZER_BASELINE_PARAM2		SIGNAL_ANALYZER_S00_AXI_SLV_REG4_OFFSET	// runtime: max_pulse_wid[15:0]
 #define SIGNAL_ANALYZER_BASELINE_MON_CH		SIGNAL_ANALYZER_S00_AXI_SLV_REG42_OFFSET
 #define SIGNAL_ANALYZER_BASELINE_MON		SIGNAL_ANALYZER_S00_AXI_SLV_REG43_OFFSET
+#define SIGNAL_ANALYZER_BASELINE_DEBUG		SIGNAL_ANALYZER_S00_AXI_SLV_REG44_OFFSET	// [8]=analyze_en, [7:0]=pulse_active
 
 
 #define GATE_CH_X_MASK 						0x00000007
@@ -253,6 +254,7 @@ void write_baseline_settings(u8 baseline_en, u8 alpha_shift, u8 slope_th);
 void write_baseline_params(u16 acquire_len, u8 guard_len, u16 max_pulse_wid);
 void baseline_reacquire(void);
 u32 read_baseline_mon(u8 ch_id);
+u32 read_baseline_debug(void);
 
 int write_gates_at(int i ,struct GateData* data, uint8_t tail);
 void reset_gates(PL_GateType_e gate);
