@@ -72,7 +72,7 @@ u8 debug_flag = 0;
 //   write_baseline_params(acquire_len, guard_len, max_pulse_wid)  // 可选
 //     复位默认：slv_reg3=0x00080400 (acquire_len=1024 / guard_len=8)，slv_reg4=255 (max_pulse_wid=255)
 // ============================================================================
-#define DEBUG_BASELINE_ENABLE  1
+#define DEBUG_BASELINE_ENABLE  0
 
 
 int main()

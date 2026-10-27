@@ -119,7 +119,15 @@
 #define SIGNAL_ANALYZER_BASELINE_PARAM2		SIGNAL_ANALYZER_S00_AXI_SLV_REG4_OFFSET	// runtime: max_pulse_wid[15:0]
 #define SIGNAL_ANALYZER_BASELINE_MON_CH		SIGNAL_ANALYZER_S00_AXI_SLV_REG42_OFFSET
 #define SIGNAL_ANALYZER_BASELINE_MON		SIGNAL_ANALYZER_S00_AXI_SLV_REG43_OFFSET
-#define SIGNAL_ANALYZER_BASELINE_DEBUG		SIGNAL_ANALYZER_S00_AXI_SLV_REG44_OFFSET	// [8]=analyze_en, [7:0]=pulse_active
+#define SIGNAL_ANALYZER_BASELINE_DEBUG		SIGNAL_ANALYZER_S00_AXI_SLV_REG44_OFFSET	// [9]=overflow, [8]=analyze_en, [7:0]=pulse_active
+/* 只读诊断寄存器 (slv_reg55 @ 0x37, 原地址空闲):
+ *   [13:0]  sample_cnt   —— ad_data_updated 自由计数, 两次读取不变即 ADC 通路已死
+ *   [31:14] 监控通道的原始滤波采样 (18 位有符号) —— 基线估计器的输入就是它
+ * 用于区分「没有采样」「采样值不在预期电平」「ACQUIRE 永远走不完」。 */
+#define SIGNAL_ANALYZER_DIAG_REG			(0x37 * 4)
+/* 只读诊断寄存器 (0x3F, 原 slv_reg63 无人使用): [31:16] = 监控通道的 ACQUIRE 进度计数.
+ * Re-acquire 后连续读它: 不动 => 估计器没收到 sample_valid; 在涨 => 状态机在走. */
+#define SIGNAL_ANALYZER_ACQ_CNT_REG			(0x3F * 4)
 
 
 #define GATE_CH_X_MASK 						0x00000007
@@ -255,6 +263,19 @@ void write_baseline_params(u16 acquire_len, u8 guard_len, u16 max_pulse_wid);
 void baseline_reacquire(void);
 u32 read_baseline_mon(u8 ch_id);
 u32 read_baseline_debug(void);
+u32 read_diag_reg(void);
+/* 回读监控通道的原始滤波采样 (slv_reg55[31:14], 18 位有符号). */
+s32 read_sample_mon(u8 ch_id);
+/* 回读监控通道的 ACQUIRE 进度计数 (0x3F[31:16]). */
+u32 read_acq_cnt(u8 ch_id);
+
+/* 回读 PL 侧实际生效的控制/参数寄存器, 用于上位机确认下发是否落地。 */
+u32 read_control_reg(void);         /* slv_reg0 */
+u32 read_baseline_ctrl_reg(void);   /* slv_reg2 */
+u32 read_baseline_param_reg(void);  /* slv_reg3 */
+u32 read_baseline_param2_reg(void); /* slv_reg4 */
+/* 回读某通道当前生效的检测阈值 (slv_reg8..15). */
+u32 read_threshold(u8 ch_id);
 
 int write_gates_at(int i ,struct GateData* data, uint8_t tail);
 void reset_gates(PL_GateType_e gate);

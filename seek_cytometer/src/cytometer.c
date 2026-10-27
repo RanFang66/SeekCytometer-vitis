@@ -116,22 +116,42 @@ int get_current_state()
     return current_state;
 }
 
+/* 把 PS 侧缓存的检测器/使能配置重新写一遍到 PL。
+ * 用于 PL 被重新下载 bitstream（寄存器全部复位）后恢复, 也用于每次 START。 */
+static void resync_analyzer_settings(void)
+{
+	write_enabled_channels(m_enabled_channels);
+	for (int i = 0; i < AD_CHANNEL_NUM; i++) {
+		if (detector_settings[i].enabled) {
+			write_detetor_settings(i, detector_settings[i].threshold_val);
+		}
+	}
+}
+
 void cytometer_start_analyze()
 {
-    if (current_state == STATE_IDLE) {
-    	analyze_enabled = 1;
-        current_state = STATE_ACQUIRING;
-        start_analyze();
-    }
+	/* 幂等: 不因为 current_state 不是 IDLE 就静默丢弃。
+	 * PL 可能被重新下载过 bitstream 而把 slv_reg0 复位成 0, 此时 PS 的
+	 * current_state 仍停留在 ACQUIRING/SORTING; 旧实现会丢弃 START,
+	 * 导致 analyze_en 永远回不到 1（上位机必须点两次 Stop/Start 才行）。 */
+	if (current_state != STATE_SORTING) {
+		current_state = STATE_ACQUIRING;
+	}
+	analyze_enabled = 1;
+	resync_analyzer_settings();
+	start_analyze();
 }
 
 void cytometer_stop_analyze()
 {
-    if (current_state == STATE_ACQUIRING) {
-    	analyze_enabled = 0;
-        current_state = STATE_IDLE;
-        stop_analyze();
-    }
+	/* 同样做成幂等: 之前只有 ACQUIRING 才停, 一旦状态和 PL 不同步就再也停不下来。 */
+	if (current_state == STATE_SORTING) {
+		LOG_WARN("Stop analyze ignored: sorting is active, stop sorting first.");
+		return;
+	}
+	analyze_enabled = 0;
+	current_state = STATE_IDLE;
+	stop_analyze();
 }
 
 void cytometer_start_sort()
@@ -193,6 +213,36 @@ void cytometer_read_baseline_mon(u32_t *values_8)
 u32_t cytometer_read_baseline_debug(void)
 {
 	return (u32_t)read_baseline_debug();
+}
+
+void cytometer_read_pl_config(u32_t *values_4)
+{
+	values_4[0] = read_control_reg();
+	values_4[1] = read_baseline_ctrl_reg();
+	values_4[2] = read_baseline_param_reg();
+	values_4[3] = read_baseline_param2_reg();
+}
+
+u32_t cytometer_read_diag(void)
+{
+	return (u32_t)read_diag_reg();
+}
+
+u32_t cytometer_get_threshold(u8_t ch_id)
+{
+	return (u32_t)read_threshold(ch_id);
+}
+
+void cytometer_read_samples(u32_t *values_8)
+{
+	for (int i = 0; i < AD_CHANNEL_NUM; i++) {
+		values_8[i] = (u32_t)read_sample_mon((u8)i);
+	}
+}
+
+u32_t cytometer_read_acq_cnt(u8_t ch_id)
+{
+	return (u32_t)read_acq_cnt(ch_id);
 }
 
 u8_t waveform_enabled_channels()
