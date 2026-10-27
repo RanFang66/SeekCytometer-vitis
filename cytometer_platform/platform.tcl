@@ -252,3 +252,32 @@ platform generate -domains
 platform active {cytometer_platform}
 platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
 platform generate -domains 
+platform active {cytometer_platform}
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform generate -domains standalone_domain 
+platform active {cytometer_platform}
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform active {cytometer_platform}
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform active {cytometer_platform}
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains standalone_domain 
+platform active {cytometer_platform}
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform active {cytometer_platform}
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
+platform config -updatehw {E:/seek_cytometer/hardware/build/seek_cytometer/cytometer_platform_wrapper.xsa}
+platform generate -domains 
