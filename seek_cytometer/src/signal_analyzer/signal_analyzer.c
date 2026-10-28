@@ -162,7 +162,7 @@ void reset_gates(PL_GateType_e gate)
 }
 
 
-void write_speed_measure_settings(u8_t speed_en, u8_t pre_ch, u8_t post_ch, int max_diff_time, int dist)
+void write_speed_measure_settings(u8_t speed_en, u8_t pre_ch, u8_t post_ch, int max_diff_time, int min_diff_time, int dist)
 {
 	// Set or clear speed measure enable bit in control register
 	u32 control_reg = SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_CONTROL);
@@ -180,6 +180,8 @@ void write_speed_measure_settings(u8_t speed_en, u8_t pre_ch, u8_t post_ch, int 
 
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_CH, speed_ch);
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_MAX_DIFF, max_diff_time);
+	/* 下界: 小于它的 dt 判为无效测量, 见 signal_analyzer.h 的 SPEED_MIN_DIFF 注释 */
+	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_MIN_DIFF, min_diff_time);
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_SPEED_DIST, dist);
 }
 

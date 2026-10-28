@@ -1,4 +1,4 @@
-﻿
+
 #include "xil_printf.h"
 #include "xparameters.h"
 #include "lwipopts.h"
@@ -297,9 +297,18 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 		int max_diff_time = big_endian_to_little_endian(data_start + 3);
 		int dist = big_endian_to_little_endian(data_start + 7);
 
-		cytometer_set_speed_measure(speed_en, preCh, postCh, max_diff_time, dist);
-		LOG_INFO("Speed Measure Setting Changed, en = %d, PreCh = %d, PostCh = %d, maxTimeSpan = %d, dist = %d.",
-				speed_en, preCh, postCh, max_diff_time, dist);
+		/* [11..14] 是后加的测速下界(us): 小于它的 pre/post 峰时间差判为无效测量。
+		 * 老上位机只发 11 字节, 此时沿用默认 1us —— 至少不会再把 dt=0 当成合法值。 */
+		int min_diff_time = 1;
+		if (data_len >= 15) {
+			min_diff_time = big_endian_to_little_endian(data_start + 11);
+			if (min_diff_time < 0) min_diff_time = 0;
+		}
+
+		cytometer_set_speed_measure(speed_en, preCh, postCh,
+		                            max_diff_time, min_diff_time, dist);
+		LOG_INFO("Speed Measure Setting Changed, en = %d, PreCh = %d, PostCh = %d, minTimeSpan = %d, maxTimeSpan = %d, dist = %d.",
+				speed_en, preCh, postCh, min_diff_time, max_diff_time, dist);
 		break;
 	}
 

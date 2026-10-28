@@ -201,9 +201,9 @@ void cytometer_set_gate(struct GateData gate)
 }
 
 
-void cytometer_set_speed_measure(u8_t speed_en, u8_t preCh, u8_t postCh, int max_diff_time, int dist)
+void cytometer_set_speed_measure(u8_t speed_en, u8_t preCh, u8_t postCh, int max_diff_time, int min_diff_time, int dist)
 {
-	write_speed_measure_settings(speed_en, preCh, postCh, max_diff_time, dist);
+	write_speed_measure_settings(speed_en, preCh, postCh, max_diff_time, min_diff_time, dist);
 }
 
 void cytometer_set_delay_refer(u8_t en, u8_t ch_id)

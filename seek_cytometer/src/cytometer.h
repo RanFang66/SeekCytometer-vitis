@@ -74,7 +74,7 @@ void cytometer_stop_sort();
 
 void cytometer_set_drive_settings(struct DriveParas paras);
 void cytometer_set_gate(struct GateData gate);
-void cytometer_set_speed_measure(u8_t speed_en, u8_t preCh, u8_t postCh, int max_diff_time, int dist);
+void cytometer_set_speed_measure(u8_t speed_en, u8_t preCh, u8_t postCh, int max_diff_time, int min_diff_time, int dist);
 void cytometer_set_delay_refer(u8_t en, u8_t ch_id);
 
 /* 基线识别与校正 (阶段4 UDP 命令映射): 下发整套参数, 可选触发一次重收敛.
