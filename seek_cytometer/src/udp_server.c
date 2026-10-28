@@ -1,4 +1,4 @@
-
+﻿
 #include "xil_printf.h"
 #include "xparameters.h"
 #include "lwipopts.h"
@@ -338,23 +338,16 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 	{
 		// 空载荷 = 请求回读; SoC 用同一命令回一帧:
 		//   [0..31]  8 x u32 大端, 每通道 = slv_reg43: [18]=baseline_valid, [17:0]=baseline
-		//   [32..35] u32 调试状态 = slv_reg44: [9]=overflow, [8]=analyze_en, [7:0]=pulse_active
-		//   [36..51] 4 x u32 = slv_reg0 / slv_reg2 / slv_reg3 / slv_reg4 回读,
-		//            让上位机能区分「已下发」和「PL 里实际生效」。
-		//   [52..55] u32 诊断 = slv_reg55: [13:0]=sample_cnt [31:14]=选中通道原始采样
-		//   [56..87] 8 x u32 = 各通道当前生效的检测阈值 (slv_reg8..15)
-		//   [88..119] 8 x u32 = 各通道原始滤波采样 (18 位有符号, 符号扩展)
-		//            基线估计器是加权平均, 输出不可能超出输入范围; 把输入也报上来,
-		//            就能直接判定「基线算错了」还是「ADC 看到的就是这个电平」。
-		//   [120..123] u32 = 监控通道的 ACQUIRE 进度计数 (0x3F[31:16])。
-		//            Re-acquire 之后它一直为 0 => 估计器没收到 sample_valid。
+		//   [32..35] u32 状态 = slv_reg44: [31:24]=0xA7 构建标识, [9]=overflow,
+		//            [8]=analyze_en, [7:0]=pulse_active
+		//
+		// 共 36 字节。上板调试期曾把 PL 配置回读、原始采样、阈值、采样节拍
+		// 一并塞进这一帧(124B), 功能验证完成后已移除: 监视帧只保留基线本身
+		// 和"采集是否在跑"这一个状态字。
 		u32_t values[AD_CHANNEL_NUM];
-		u32_t pl_cfg[4];
-		u32_t diag;
-		u32_t raw_samples[AD_CHANNEL_NUM];
-		u8_t  mon_data[AD_CHANNEL_NUM * 4 + 4 + 16 + 4 + AD_CHANNEL_NUM * 4
-		              + AD_CHANNEL_NUM * 4 + 4];
+		u8_t  mon_data[AD_CHANNEL_NUM * 4 + 4];
 		int i;
+
 		cytometer_read_baseline_mon(values);
 		for (i = 0; i < AD_CHANNEL_NUM; i++) {
 			mon_data[4*i + 0] = (u8_t)(values[i] >> 24);
@@ -362,44 +355,15 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 			mon_data[4*i + 2] = (u8_t)(values[i] >> 8);
 			mon_data[4*i + 3] = (u8_t)(values[i]);
 		}
-		u32_t dbg = cytometer_read_baseline_debug();
-		mon_data[32] = (u8_t)(dbg >> 24);
-		mon_data[33] = (u8_t)(dbg >> 16);
-		mon_data[34] = (u8_t)(dbg >> 8);
-		mon_data[35] = (u8_t)(dbg);
-		cytometer_read_pl_config(pl_cfg);
-		for (i = 0; i < 4; i++) {
-			mon_data[36 + 4*i + 0] = (u8_t)(pl_cfg[i] >> 24);
-			mon_data[36 + 4*i + 1] = (u8_t)(pl_cfg[i] >> 16);
-			mon_data[36 + 4*i + 2] = (u8_t)(pl_cfg[i] >> 8);
-			mon_data[36 + 4*i + 3] = (u8_t)(pl_cfg[i]);
-		}
-		diag = cytometer_read_diag();
-		mon_data[52] = (u8_t)(diag >> 24);
-		mon_data[53] = (u8_t)(diag >> 16);
-		mon_data[54] = (u8_t)(diag >> 8);
-		mon_data[55] = (u8_t)(diag);
-		for (i = 0; i < AD_CHANNEL_NUM; i++) {
-			u32_t thr = cytometer_get_threshold((u8_t)i);
-			mon_data[56 + 4*i + 0] = (u8_t)(thr >> 24);
-			mon_data[56 + 4*i + 1] = (u8_t)(thr >> 16);
-			mon_data[56 + 4*i + 2] = (u8_t)(thr >> 8);
-			mon_data[56 + 4*i + 3] = (u8_t)(thr);
-		}
-		cytometer_read_samples(raw_samples);
-		for (i = 0; i < AD_CHANNEL_NUM; i++) {
-			mon_data[88 + 4*i + 0] = (u8_t)(raw_samples[i] >> 24);
-			mon_data[88 + 4*i + 1] = (u8_t)(raw_samples[i] >> 16);
-			mon_data[88 + 4*i + 2] = (u8_t)(raw_samples[i] >> 8);
-			mon_data[88 + 4*i + 3] = (u8_t)(raw_samples[i]);
-		}
+
 		{
-			u32_t acq = cytometer_read_acq_cnt(7);	// 监控通道与 PS 循环末尾一致
-			mon_data[120] = (u8_t)(acq >> 24);
-			mon_data[121] = (u8_t)(acq >> 16);
-			mon_data[122] = (u8_t)(acq >> 8);
-			mon_data[123] = (u8_t)(acq);
+			u32_t dbg = cytometer_read_baseline_debug();
+			mon_data[32] = (u8_t)(dbg >> 24);
+			mon_data[33] = (u8_t)(dbg >> 16);
+			mon_data[34] = (u8_t)(dbg >> 8);
+			mon_data[35] = (u8_t)(dbg);
 		}
+
 		send_udp_frame(CMD_BASELINE_MONITOR, sizeof(mon_data), mon_data);
 		break;
 	}

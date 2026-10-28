@@ -84,22 +84,8 @@ void cytometer_set_baseline(u8_t baseline_en, u8_t alpha_shift, u8_t slope_th,
                             u8_t acquire_force, u16_t acquire_len, u8_t guard_len, u16_t max_pulse_wid);
 /* 回读 8 通道基线监视值, 每项 = slv_reg43: [18]=baseline_valid, [17:0]=baseline 整数码. */
 void cytometer_read_baseline_mon(u32_t *values_8);
-/* 回读调试状态 = slv_reg44: [9]=overflow, [8]=analyze_en, [7:0]=pulse_active. */
+/* 回读调试状态 = slv_reg44: [31:24]=0xA7 构建标识, [9]=overflow, [8]=analyze_en, [7:0]=pulse_active. */
 u32_t cytometer_read_baseline_debug(void);
-/* 回读 PL 侧实际生效的寄存器 (4 个字): slv_reg0 / slv_reg2 / slv_reg3 / slv_reg4.
- * 上位机用它区分「我下发了什么」和「PL 里现在是什么」。 */
-void cytometer_read_pl_config(u32_t *values_4);
-/* 回读诊断寄存器 slv_reg55: [13:0]=sample_cnt, [31:14]=选中通道原始采样. */
-u32_t cytometer_read_diag(void);
-/* 回读某通道当前生效的检测阈值 (slv_reg8..15). 0 = 上位机从未下发,
- * 此时 detect_ref 会塌到 baseline 本身, 任何高于基线的采样都会被当成脉冲。 */
-u32_t cytometer_get_threshold(u8_t ch_id);
-/* 回读 8 通道的原始滤波采样 (18 位有符号, 符号扩展到 u32). 这是基线估计器的输入,
- * 用来确认 ADC 到底看到什么电平 —— 估计器是加权平均, 输出不可能超出输入范围。 */
-void cytometer_read_samples(u32_t *values_8);
-/* 回读监控通道的 ACQUIRE 进度计数 (0x3F[31:16]). Re-acquire 后若它一直为 0,
- * 说明估计器没有收到 sample_valid（而不是收敛慢）。 */
-u32_t cytometer_read_acq_cnt(u8_t ch_id);
 
 u8_t waveform_is_enabled();
 u8_t waveform_enabled_channel_num();

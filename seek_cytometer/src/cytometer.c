@@ -12,6 +12,17 @@ struct  DETECTOR_SETTING detector_settings[AD_CHANNEL_NUM];
 int     threshold_type = THRESHOLD_TYPE_OR;
 u8_t    m_enabled_channels = 0;
 
+/* 最近一次下发的基线参数。基线寄存器在 PL 里, 重新下载 bitstream 会复位成
+ * 默认值(基线关闭), 而 PS 的 current_state 仍然有效 —— 所以 START 时要补下发
+ * 一次, 否则用户会发现"调好的基线自己关了"。
+ * acquire_force 有意不缓存: 它是一次性脉冲, 每次 START 重发会把预热计数反复清零。 */
+static u8_t  m_baseline_en       = 0;
+static u8_t  m_baseline_alpha    = 16;
+static u16_t m_baseline_acq_len  = 1024;
+static u8_t  m_baseline_guard    = 8;
+static u16_t m_baseline_max_wid  = 4095;
+static u8_t  m_baseline_sent     = 0;
+
 u8_t    analyze_enabled = 0;
 u8_t    sort_enabled = 0;
 
@@ -126,6 +137,11 @@ static void resync_analyzer_settings(void)
 			write_detetor_settings(i, detector_settings[i].threshold_val);
 		}
 	}
+	/* 基线参数: PL 复位后一并补下发(不发 acquire_force, 避免每次 START 重置预热)。 */
+	if (m_baseline_sent) {
+		write_baseline_settings(m_baseline_en, m_baseline_alpha, 0);
+		write_baseline_params(m_baseline_acq_len, m_baseline_guard, m_baseline_max_wid);
+	}
 }
 
 void cytometer_start_analyze()
@@ -166,7 +182,9 @@ void cytometer_stop_sort()
 {
     if (current_state == STATE_SORTING) {
     	sort_enabled = 0;
-        current_state = STATE_IDLE;
+        /* 停分选不等于停采集: 采集还在跑时状态回到 ACQUIRING, 而不是 IDLE。
+         * 保持 IDLE 会让后续"停采集"看起来生效, 但状态机已经不同步。 */
+        current_state = analyze_enabled ? STATE_ACQUIRING : STATE_IDLE;
         stop_sort();
     }
 }
@@ -198,6 +216,14 @@ void cytometer_set_baseline(u8_t baseline_en, u8_t alpha_shift, u8_t slope_th,
 {
 	write_baseline_settings(baseline_en, alpha_shift, slope_th);
 	write_baseline_params(acquire_len, guard_len, max_pulse_wid);
+
+	m_baseline_en      = baseline_en;
+	m_baseline_alpha   = alpha_shift;
+	m_baseline_acq_len = acquire_len;
+	m_baseline_guard   = guard_len;
+	m_baseline_max_wid = max_pulse_wid;
+	m_baseline_sent    = 1;
+
 	if (acquire_force) {
 		baseline_reacquire();
 	}
@@ -213,36 +239,6 @@ void cytometer_read_baseline_mon(u32_t *values_8)
 u32_t cytometer_read_baseline_debug(void)
 {
 	return (u32_t)read_baseline_debug();
-}
-
-void cytometer_read_pl_config(u32_t *values_4)
-{
-	values_4[0] = read_control_reg();
-	values_4[1] = read_baseline_ctrl_reg();
-	values_4[2] = read_baseline_param_reg();
-	values_4[3] = read_baseline_param2_reg();
-}
-
-u32_t cytometer_read_diag(void)
-{
-	return (u32_t)read_diag_reg();
-}
-
-u32_t cytometer_get_threshold(u8_t ch_id)
-{
-	return (u32_t)read_threshold(ch_id);
-}
-
-void cytometer_read_samples(u32_t *values_8)
-{
-	for (int i = 0; i < AD_CHANNEL_NUM; i++) {
-		values_8[i] = (u32_t)read_sample_mon((u8)i);
-	}
-}
-
-u32_t cytometer_read_acq_cnt(u8_t ch_id)
-{
-	return (u32_t)read_acq_cnt(ch_id);
 }
 
 u8_t waveform_enabled_channels()
@@ -275,4 +271,3 @@ u8_t waveform_sample_interval()
 {
 	return waveform_interval;
 }
-

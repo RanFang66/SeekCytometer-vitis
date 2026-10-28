@@ -34,8 +34,15 @@ void stop_sort()
 {
 	u32 control_reg = SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_CONTROL);
 	control_reg &= ~SORT_ENABLE_MASK;
-	control_reg &= ~ANALYZE_ENABLE_MASK;
-
+	/* 注意: 这里**不能**清 ANALYZE_ENABLE_MASK。
+	 *
+	 * 采集(analyze)与分选(sort)是两件独立的事: PL 里 sort_en 只门控
+	 * drive_signal_generation(液滴充电), 而 event_aggregator 由 analyze_en 门控。
+	 * 原实现把 analyze 一起清掉, 后果是分选一停 PL 的 analyze_en=0,
+	 * event_aggregator 随即复位 write_addr/event_id 并停止写事件 ——
+	 * 上位机表现就是"分选结束后还在采集, 但 analyzed events 不再增长"。
+	 *
+	 * 采集开关由 start_analyze()/stop_analyze() 单独负责。 */
 	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_CONTROL, control_reg);
 }
 
@@ -261,74 +268,3 @@ u32 read_baseline_debug(void)
 	// slv_reg44: [9]=any-channel overflow, [8]=analyze_en, [7:0]=pulse_active (8 channels)
 	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_DEBUG);
 }
-
-
-u32 read_control_reg(void)
-{
-	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_CONTROL);
-}
-
-
-u32 read_baseline_ctrl_reg(void)
-{
-	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_CTRL);
-}
-
-
-u32 read_baseline_param_reg(void)
-{
-	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_PARAM);
-}
-
-
-u32 read_baseline_param2_reg(void)
-{
-	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_PARAM2);
-}
-
-
-u32 read_diag_reg(void)
-{
-	// slv_reg55: [31:14] = raw filtered sample of the monitored channel,
-	//             [13:0]  = free-running count of ADC sample-valid edges.
-	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_DIAG_REG);
-}
-
-
-s32 read_sample_mon(u8 ch_id)
-{
-	u32 v;
-	// Select the channel, then read the diagnostic register. PL memory is strongly
-	// ordered, so the select is visible before the read.
-	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_MON_CH,
-	                          (u32)(ch_id & BASELINE_MON_CH_MASK));
-	v = SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_DIAG_REG);
-	// [31:14] is a sign-extended 18-bit sample.
-	return ((s32)v) >> 14;
-}
-
-
-u32 read_acq_cnt(u8 ch_id)
-{
-	u32 v;
-	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_BASELINE_MON_CH,
-	                          (u32)(ch_id & BASELINE_MON_CH_MASK));
-	v = SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR, SIGNAL_ANALYZER_ACQ_CNT_REG);
-	return (v >> 16) & 0xFFFFu;
-}
-
-
-u32 read_threshold(u8 ch_id)
-{
-	// slv_reg8..15, one per channel. These are the detector thresholds the upper
-	// computer last sent; with the relative-threshold semantics they mean "peak
-	// height above baseline". 0 means "never configured", and then detect_ref
-	// collapses onto the baseline itself, so every sample above the baseline looks
-	// like a pulse.
-	if (ch_id >= AD_CHANNEL_NUM) {
-		ch_id = 0;
-	}
-	return SIGNAL_ANALYZER_mReadReg(SIGNAL_ANALYZER_BASE_ADDR,
-	                                SIGNAL_ANALYZER_THRESH_CH1 + (ch_id * 4));
-}
-
