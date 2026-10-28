@@ -2,6 +2,7 @@
 #include "xil_printf.h"
 #include "log.h"
 #include "signal_analyzer.h"
+#include "speed_measure.h"
 
 /* Current Cytometer State */
 enum CYTOMETER_STATE current_state;
@@ -142,6 +143,8 @@ static void resync_analyzer_settings(void)
 		write_baseline_settings(m_baseline_en, m_baseline_alpha, 0);
 		write_baseline_params(m_baseline_acq_len, m_baseline_guard, m_baseline_max_wid);
 	}
+	/* 测速配置: PL 重新下载 bitstream 后同样会丢, 这里补下发(含峰值质量门)。 */
+	speed_measure_resync();
 }
 
 void cytometer_start_analyze()
@@ -201,9 +204,20 @@ void cytometer_set_gate(struct GateData gate)
 }
 
 
-void cytometer_set_speed_measure(u8_t speed_en, u8_t preCh, u8_t postCh, int max_diff_time, int min_diff_time, int dist)
+void cytometer_set_speed_measure(u8_t speed_en, u8_t preCh, u8_t postCh,
+                                 int max_diff_time, int min_diff_time, int dist,
+                                 u32_t peak_margin_codes)
 {
-	write_speed_measure_settings(speed_en, preCh, postCh, max_diff_time, min_diff_time, dist);
+	/* 测速逻辑已收拢到 speed_measure.c: 这里只做参数转交。 */
+	struct speed_measure_config cfg;
+	cfg.enabled           = speed_en;
+	cfg.pre_ch            = preCh;
+	cfg.post_ch           = postCh;
+	cfg.min_us            = (u32_t)min_diff_time;
+	cfg.max_us            = (u32_t)max_diff_time;
+	cfg.spot_dist_um      = (u32_t)dist;
+	cfg.peak_margin_codes = peak_margin_codes;
+	speed_measure_configure(&cfg);
 }
 
 void cytometer_set_delay_refer(u8_t en, u8_t ch_id)

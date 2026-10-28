@@ -298,17 +298,24 @@ static XStatus parse_frame(const u8_t *pdata, int len)
 		int dist = big_endian_to_little_endian(data_start + 7);
 
 		/* [11..14] 是后加的测速下界(us): 小于它的 pre/post 峰时间差判为无效测量。
-		 * 老上位机只发 11 字节, 此时沿用默认 1us —— 至少不会再把 dt=0 当成合法值。 */
+		 * 老上位机只发 11 字节, 此时沿用默认 1us —— 至少不会再把 dt=0 当成合法值。
+		 * [15..18] 是峰值质量门余量(码): 峰值须比阈值再高这么多才算有效脉冲,
+		 * 用来丢弃刚跨过阈值的噪声毛刺; 缺省 0 = 关闭。 */
 		int min_diff_time = 1;
 		if (data_len >= 15) {
 			min_diff_time = big_endian_to_little_endian(data_start + 11);
 			if (min_diff_time < 0) min_diff_time = 0;
 		}
+		u32_t peak_margin = 0;
+		if (data_len >= 19) {
+			peak_margin = (u32_t)big_endian_to_little_endian(data_start + 15);
+		}
 
 		cytometer_set_speed_measure(speed_en, preCh, postCh,
-		                            max_diff_time, min_diff_time, dist);
-		LOG_INFO("Speed Measure Setting Changed, en = %d, PreCh = %d, PostCh = %d, minTimeSpan = %d, maxTimeSpan = %d, dist = %d.",
-				speed_en, preCh, postCh, min_diff_time, max_diff_time, dist);
+		                            max_diff_time, min_diff_time, dist,
+		                            peak_margin);
+		LOG_INFO("Speed Measure Setting Changed, en = %d, PreCh = %d, PostCh = %d, minTimeSpan = %d, maxTimeSpan = %d, dist = %d, peakMargin = %d.",
+				speed_en, preCh, postCh, min_diff_time, max_diff_time, dist, (int)peak_margin);
 		break;
 	}
 

@@ -186,6 +186,16 @@ void write_speed_measure_settings(u8_t speed_en, u8_t pre_ch, u8_t post_ch, int 
 }
 
 
+/* 峰值质量门余量: 见 pulse_analyzer.v 的 peak_margin。0 = 关闭(旧行为)。
+ * 全局参数, 所有通道共用: 峰值必须比 detect_ref 再高这么多码才算有效脉冲,
+ * 用来丢弃刚跨过阈值的噪声毛刺。 */
+void write_peak_margin(u32_t margin_codes)
+{
+	SIGNAL_ANALYZER_mWriteReg(SIGNAL_ANALYZER_BASE_ADDR,
+	                          SIGNAL_ANALYZER_PEAK_MARGIN, margin_codes);
+}
+
+
 
 
 void write_delay_refer_settings(u8_t en, u8_t ch_id)

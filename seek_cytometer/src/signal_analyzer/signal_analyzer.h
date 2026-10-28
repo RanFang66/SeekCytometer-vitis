@@ -116,6 +116,9 @@
  * "两个峰落在同一时间刻度"或 pre 通道被串扰触发的错配。0 = 不设下界(旧行为),
  * 复位默认 1。 */
 #define SIGNAL_ANALYZER_SPEED_MIN_DIFF		SIGNAL_ANALYZER_S00_AXI_SLV_REG45_OFFSET
+/* 峰值质量门余量(码): 脉冲峰值必须比检测参考再高这么多才算有效脉冲。
+ * 0 = 关闭。全局参数, 所有通道共用。 */
+#define SIGNAL_ANALYZER_PEAK_MARGIN			SIGNAL_ANALYZER_S00_AXI_SLV_REG46_OFFSET
 
 #define SIGNAL_ANALYZER_BRAM_STATE			SIGNAL_ANALYZER_S00_AXI_SLV_REG56_OFFSET
 #define SIGNAL_ANALYZER_BASELINE_CTRL		SIGNAL_ANALYZER_S00_AXI_SLV_REG2_OFFSET
@@ -252,6 +255,7 @@ void write_detetor_settings(int id, int thresh);
 void write_enabled_channels(u8 enabled_channels);
 void write_gate_settings(struct GateData data);
 void write_speed_measure_settings(u8_t speed_en, u8_t preCh, u8_t postCh, int max_diff_time, int min_diff_time, int dist);
+void write_peak_margin(u32_t margin_codes);
 void write_delay_refer_settings(u8_t en, u8_t ch_id);
 void write_drive_settings(struct DriveParas paras);
 void write_baseline_settings(u8 baseline_en, u8 alpha_shift, u8 slope_th);
