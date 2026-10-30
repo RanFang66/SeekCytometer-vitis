@@ -3,21 +3,21 @@
 #include "signal_analyzer.h"
 #include "log.h"
 
-/* 默认: 关闭; pre=CH1 post=CH2; 20um 光斑间距、1~20us 窗口(1~20 m/s)。
+/* 默认: 关闭; pre=CH1 post=CH2; 20um 光斑间距、1~100us 窗口(20um 下对应 0.2~20 m/s)。
  * 这些值只是"第一次上电且上位机还没下发"时的兜底, 上位机会立即覆盖。 */
 static struct speed_measure_config m_cfg = {
     .enabled           = 0,
     .pre_ch            = 1,
     .post_ch           = 2,
     .min_us            = 1,
-    .max_us            = 20,
+    .max_us            = 100,
     .spot_dist_um      = 20,
     .peak_margin_codes = 0
 };
 
-static u8_t m_cfg_valid = 0;   /* 是否收到过上位机配置 */
+static u8 m_cfg_valid = 0;   /* 是否收到过上位机配置 */
 
-static u32_t clamp_u32(u32_t v, u32_t lo, u32_t hi)
+static u32 clamp_u32(u32 v, u32 lo, u32 hi)
 {
     if (v < lo) return lo;
     if (v > hi) return hi;
@@ -85,12 +85,12 @@ void speed_measure_resync(void)
     LOG_INFO("Speed measure: re-applied cached config (en=%d)", m_cfg.enabled);
 }
 
-u8_t speed_measure_enabled(void)
+u8 speed_measure_enabled(void)
 {
     return m_cfg.enabled;
 }
 
-u32_t speed_measure_dist_um(void)
+u32 speed_measure_dist_um(void)
 {
     return m_cfg.spot_dist_um;
 }

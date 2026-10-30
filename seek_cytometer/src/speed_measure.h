@@ -1,6 +1,7 @@
 #ifndef SPEED_MEASURE_H
 #define SPEED_MEASURE_H
 
+#include "xstatus.h"
 #include "xil_types.h"
 
 /*
@@ -22,13 +23,13 @@
  */
 struct speed_measure_config
 {
-    u8_t  enabled;            /* 0 = 关闭 (控制位 slv_reg0[2]) */
-    u8_t  pre_ch;             /* 前光斑通道, 1..8 */
-    u8_t  post_ch;            /* 后光斑通道, 1..8 */
-    u32_t min_us;             /* dt 下界(us), 0 = 不设下界  -> slv_reg45 */
-    u32_t max_us;             /* dt 上界(us)              -> slv_reg53 */
-    u32_t spot_dist_um;       /* 两光斑间距(um)           -> slv_reg54 */
-    u32_t peak_margin_codes;  /* 峰值质量门余量(码), 0=关闭 -> slv_reg46 */
+    u8  enabled;            /* 0 = 关闭 (控制位 slv_reg0[2]) */
+    u8  pre_ch;             /* 前光斑通道, 1..8 */
+    u8  post_ch;            /* 后光斑通道, 1..8 */
+    u32 min_us;             /* dt 下界(us), 0 = 不设下界  -> slv_reg45 */
+    u32 max_us;             /* dt 上界(us)              -> slv_reg53 */
+    u32 spot_dist_um;       /* 两光斑间距(um)           -> slv_reg54 */
+    u32 peak_margin_codes;  /* 峰值质量门余量(码), 0=关闭 -> slv_reg46 */
 };
 
 /* 下发并缓存配置。参数会先夹到合法范围。 */
@@ -40,7 +41,7 @@ void speed_measure_get_config(struct speed_measure_config *out);
 /* PL 复位/重新下载后重新下发缓存值(不发一次性动作)。未配置过则什么都不做。 */
 void speed_measure_resync(void);
 
-u8_t  speed_measure_enabled(void);
-u32_t speed_measure_dist_um(void);
+u8  speed_measure_enabled(void);
+u32 speed_measure_dist_um(void);
 
 #endif /* SPEED_MEASURE_H */
